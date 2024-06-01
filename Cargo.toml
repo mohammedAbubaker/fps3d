@@ -1,0 +1,11 @@
+[package]
+name = "fps3d"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+winit = { version = "0.29", features = ["rwh_05"] }
+env_logger = "0.10"
+log = "0.4"
+wgpu = "0.19.3"
+tokio = { version = "1", features = ["full"] }
