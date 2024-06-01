@@ -189,10 +189,25 @@ impl<'a> GraphicEngine<'a> {
                         write_mask: wgpu::ColorWrites::ALL
                     })],
                 }),
+                primitive: wgpu::PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList,
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: Some(wgpu::Face::Back),
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    unclipped_depth: false,
+                    conservative: false,
+                },
+
+                depth_stencil: None,
+                multisample: wgpu::MultisampleState { 
+                    count: 1, 
+                    mask: !0, 
+                    alpha_to_coverage_enabled: false,
+                },
+                multiview: None,
             }
-        )
-
-
+        );
             
         return GraphicEngine {
             surface,
@@ -200,7 +215,8 @@ impl<'a> GraphicEngine<'a> {
             queue,
             config,
             size,
-            window
+            window,
+            pipeline
         };
     }
     
@@ -238,7 +254,7 @@ impl<'a> GraphicEngine<'a> {
         });
 
         {
-            let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
@@ -257,6 +273,9 @@ impl<'a> GraphicEngine<'a> {
                 occlusion_query_set: None,
                 timestamp_writes: None
             });
+
+            render_pass.set_pipeline(&self.pipeline);
+            render_pass.draw(0..3, 0..1);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
