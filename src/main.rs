@@ -1,5 +1,5 @@
 use std::{sync::{mpsc::{self, Receiver, Sender}, Arc, Mutex}};
-use wgpu::core::device;
+use wgpu::{core::device, util::DeviceExt};
 use winit::{
     event::{self, *},
     event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget},
@@ -96,6 +96,19 @@ impl GameState {
     }
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct Vertex {
+    position: [f32; 3],
+    color: [f32; 3],
+}
+
+const VERTICES: &[Vertex] = &[
+    Vertex { position: [0.0, 0.5, 0.0], color: [1.0, 0.0, 0.0]},
+    Vertex { position: [-0.5, -0.5, 0.0], color: [0.0, 1.0, 0.0]},
+    Vertex { position: [0.5, -0.5, 0.0], color: [0.0, 0.0, 1.0]},
+];
+
 struct GraphicEngine<'a> {
     surface: wgpu::Surface<'a>,
     device: wgpu::Device,
@@ -103,7 +116,8 @@ struct GraphicEngine<'a> {
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
     window: &'a Window,
-    pipeline: wgpu::RenderPipeline
+    pipeline: wgpu::RenderPipeline,
+    buffer: wgpu::Buffer,
 }
 
 impl<'a> GraphicEngine<'a> {
@@ -208,6 +222,14 @@ impl<'a> GraphicEngine<'a> {
                 multiview: None,
             }
         );
+
+        let buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Buffer"),
+                contents: bytemuck::cast_slice(VERTICES),
+                usage: wgpu::BufferUsages::VERTEX
+            }
+        );
             
         return GraphicEngine {
             surface,
@@ -216,7 +238,8 @@ impl<'a> GraphicEngine<'a> {
             config,
             size,
             window,
-            pipeline
+            pipeline,
+            buffer
         };
     }
     
